@@ -18,7 +18,6 @@
 // INSTALL LIBRARIES
 #include <LiquidCrystal.h> // initialize the library with the numbers of the interface pins
 #include <DHT.h>              // Needed for DHT sensor
-#include "Pitches.h"          // Include file containing notes and melody
 #include "Bytes.h"            // Include file containing characters for LCD
 #define DHTPIN 6              // What pin we're connected to
 #define DHTTYPE DHT22         // DHT 22  (AM2302)
@@ -36,6 +35,10 @@ const int blueLedPin = 2;             // Connect Blue LED to pin 2
 const int greenLedPin = 3;            // Connect Green LED to pin 3
 const int redLedPin = 4;              // Connect Red LED to pin 4
 float faren;                          // Create float for faren variable
+float lastTime = 0;
+int currentState = -1; // 0 = cold, 1 = normal, 2 = hot
+int previousState;
+int counter = 0; 
 
 
 void setup() {
@@ -55,19 +58,58 @@ void setup() {
   lcd.createChar(7, happy);
   lcd.home();
 
-  // Serial.begin(9600); // Not needed for running code, uncomment if you want to print values to serial monitor
+
+  //Serial.begin(9600); // Not needed for running code, uncomment if you want to print values to serial monitor
   dht.begin();
 
 }
 
-
 void loop(){
-
 // Read data and store it to variables hum and temp, create faren variable to convert from C to F
     hum = dht.readHumidity();
     temp = dht.readTemperature();
     faren = (temp * 1.8) + 32;
-    
+
+
+    if(faren <= 65.99){ 
+      currentState = 0;
+      stateCompare();
+      cold();
+    }
+
+    else if(faren <= 79.99 && faren >= 66){
+      currentState = 1;
+      stateCompare();
+      normal();
+    }
+
+    else{
+      currentState = 2;
+      stateCompare();
+      hot();  
+    }
+}
+
+
+void stateCompare(){
+  if(currentState != -1){
+    previousState = currentState;
+  }
+  
+  counterCheck();
+}
+
+void counterCheck(){
+  if(currentState == previousState){
+    counter++;
+  }
+  
+  else{
+    counter = 0;
+  }
+}
+
+   
 // Print temp and humidity values to serial monitor
     // Not needed for running code! Just uncomment if you want to see values in serial monitor.
     /*Serial.println(F("Humidity: "));
@@ -79,80 +121,106 @@ void loop(){
     Serial.println(F(" Farenheit"));
     delay(2000); //Delay 2 sec.*/
   
-  
-// IF TEMP IS COLD
-    if(faren <= 65.99 && play == false){     // If temperature is <= 65.99 F
-      digitalWrite(blueLedPin, HIGH);        // Turn on blue LED
 
-        // Draw a sleepy face on the LCD
-        lcd.setCursor(5,0); // Centers cursor
-        lcd.print("(-_-)"); // Prints sleepy face
-        
-        lcd.setCursor(2,1); // Will move the cursor to the second line
+void cold(){
+  digitalWrite(blueLedPin, HIGH);        // Turns on and off blue LED
+    delay(1000);
+    digitalWrite(blueLedPin, LOW);
+    delay(1000);
+    digitalWrite(blueLedPin, HIGH);                    
+    delay(1000);
+    digitalWrite(blueLedPin, LOW);
+    delay(1000);
+    digitalWrite(blueLedPin, HIGH);                    
+    delay(1000);
+    digitalWrite(blueLedPin, LOW);
+    delay(1000);
+    digitalWrite(blueLedPin, HIGH);
 
-        // Print temperature in F on LCD
-        lcd.print("Temp: ");
-        lcd.print(faren);
-        lcd.print("F");
-        
+      // Draw a sleepy face on the LCD
+      lcd.setCursor(5,0); // Centers cursor
+      lcd.print("(-_-)"); // Prints sleepy face
+      
+      lcd.setCursor(2,1); // Will move the cursor to the second line
+
+      // Print temperature in F on LCD
+      lcd.print("Temp: ");
+      lcd.print(faren);
+      lcd.print("F");
+
+      if(counter < 4) {   // Plays a sad tone
         tone(buzzer, 400, 500);
         delay(500);
         tone(buzzer, 200, 500);
         delay(500);
-        play =true;
-      }
-  
-  
-  
-// IF TEMP IS NORMAL
-    if(faren <= 79.99 && faren >= 66 && play == false){   // If temperature is between 66 F and 79.99 F
-      digitalWrite(greenLedPin, HIGH);                    // Turns on green LED
-
-        // Draw a happy face on the LCD
-        lcd.setCursor(5,0); // Centers cursor
-        lcd.write(byte(0)); // L face
-        lcd.write(byte(5)); // Eye
-        lcd.write(byte(7)); // Mouth
-        lcd.write(byte(1)); // Eye
-        lcd.write(byte(6)); // R face
-        
-        lcd.setCursor(2,1); // Will move the cursor to the second line
-
-        // Print temperature in F on LCD
-        lcd.print("Temp: ");
-        lcd.print(faren);
-        lcd.print("F");
-
-      for (int thisNote = 0; thisNote < notes * 2; thisNote = thisNote + 2){
-          // Calculates the duration of each note
-          divider = melody[thisNote + 1];
-          if (divider > 0) {
-          // Regular note, just proceed
-            noteDuration = (wholenote) / divider;
-          } else if (divider < 0) {
-          // Dotted notes are represented with negative durations!!
-            noteDuration = (wholenote) / abs(divider);
-            noteDuration *= 1.5; // increases the duration in half for dotted notes
-          }
-
-          // We only play the note for 90% of the duration, leaving 10% as a pause
-          tone(buzzer, melody[thisNote], noteDuration*0.9);
-
-          // Wait for the specief duration before playing the next note.
-          delay(noteDuration);
-
-          // Stop the waveform generation before the next note.
-          noTone(buzzer);
-          play = true;
+        }  
+          
+        else{
+          noTone(7);
         }
-        delay(1000000);
-      }
-  
-  
-  
-// IF TEMP IS HOT
-    if(faren >=80 && play == false){    // If the temperature is >= 80 F
-      digitalWrite(redLedPin, HIGH);    // Turn on red LED
+      
+}
+
+  void normal(){
+    digitalWrite(greenLedPin, HIGH);                    // Turns on and off green LED
+    delay(500);
+    digitalWrite(greenLedPin, LOW);
+    delay(500);
+    digitalWrite(greenLedPin, HIGH);                    
+    delay(500);
+    digitalWrite(greenLedPin, LOW);
+    delay(500);
+    digitalWrite(greenLedPin, HIGH);                    
+    delay(500);
+    digitalWrite(greenLedPin, LOW);
+    delay(500);
+    digitalWrite(greenLedPin, HIGH);
+    
+
+      // Draw a happy face on the LCD
+      lcd.setCursor(5,0); // Centers cursor
+      lcd.write(byte(0)); // L face
+      lcd.write(byte(5)); // Eye
+      lcd.write(byte(7)); // Mouth
+      lcd.write(byte(1)); // Eye
+      lcd.write(byte(6)); // R face
+      
+      lcd.setCursor(2,1); // Will move the cursor to the second line
+
+      // Print temperature in F on LCD
+      lcd.print("Temp: ");
+      lcd.print(faren);
+      lcd.print("F");
+
+
+ 
+      if(counter < 4) {   // Plays a happy tone
+          tone(buzzer, 700, 400);
+          delay(500);
+          tone(buzzer, 900, 500);
+          delay(500);
+          }
+              
+          else{
+            noTone(7);
+          }
+          
+       }
+
+  void hot(){
+      digitalWrite(redLedPin, HIGH);    // Turn on and off red LED
+      delay(250);
+      digitalWrite(redLedPin, LOW);
+      delay(250);
+      digitalWrite(redLedPin, HIGH);                    
+      delay(250);
+      digitalWrite(redLedPin, LOW);
+      delay(250);
+      digitalWrite(redLedPin, HIGH);                    
+      delay(250);
+      digitalWrite(redLedPin, LOW);
+      delay(250);
+      digitalWrite(redLedPin, HIGH);
 
       // Draw a mad face on the LCD
       lcd.setCursor(4,0); // Centers cursor
@@ -170,12 +238,16 @@ void loop(){
       lcd.print("Temp: "); 
       lcd.print(faren);
       lcd.print("F");
-      
-      tone(buzzer, 400, 500);   // The buzzer emits sound at 400 MHz for 500 millis
-      delay(500);               // Wait 500 millis
-      tone(buzzer, 600, 500);   // The buzzer emits sound at 650 MHz for 500 millis
-      delay(500);               // Wait 500 millis
-      play = true;
-    
-    }
-  }
+
+      if(counter < 4) {   // Plays a mad tone
+        tone(buzzer, 400, 500);
+        delay(500);
+        tone(buzzer, 200, 500);
+        delay(500);
+        }   
+         
+        else{
+          noTone(7);
+        }
+  
+}
