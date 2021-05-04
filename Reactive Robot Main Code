@@ -16,29 +16,28 @@
 ------------------------------------------------------------*/
 
 // INSTALL LIBRARIES
-#include <LiquidCrystal.h> // initialize the library with the numbers of the interface pins
-#include <DHT.h>              // Needed for DHT sensor
+#include <LiquidCrystal.h>    // Initialize the LCD library
+#include <DHT.h>              // Initialize DHT sensor library
 #include "Bytes.h"            // Include file containing characters for LCD
-#define DHTPIN 6              // What pin we're connected to
-#define DHTTYPE DHT22         // DHT 22  (AM2302)
+#define DHTPIN 6              // Pin DHT is connected to
+#define DHTTYPE DHT22         // Define DHT 22  (AM2302)
 DHT dht(DHTPIN, DHTTYPE);     // Initialize DHT sensor for normal 16mhz Arduino
 
 
 // INITIALIZE VARIABLES AND DEFINE CONSTANTS
-LiquidCrystal lcd(0, 1, 8, 9, 10, 11); // Register select pin, enable pin, D4 pin, D5 pin, D6 pin, D7 pin on LCD
+LiquidCrystal lcd(0, 1, 8, 9, 10, 11); // Register select pin, enable pin, D4 pin, D5 pin, D6 pin, D7 pin on LCD connected to pins 0, 1, 8, 9, 10, and 11 on arduino
 int chk;
 float hum;                            // Stores humidity value
 float temp;                           // Stores temperature value
-bool play = false;                    // Boolean value that 
-int buzzer = 7;                       // Buzzer is connected to pin 7
-const int blueLedPin = 2;             // Connect Blue LED to pin 2
-const int greenLedPin = 3;            // Connect Green LED to pin 3
-const int redLedPin = 4;              // Connect Red LED to pin 4
+bool play = false;                    // Boolean value that controls buzzer
+int buzzer = 7;                       // Buzzer to pin 7
+const int blueLedPin = 2;             // Blue LED to pin 2
+const int greenLedPin = 3;            // Green LED to pin 3
+const int redLedPin = 4;              // Red LED to pin 4
 float faren;                          // Create float for faren variable
-float lastTime = 0;
-int currentState = -1; // 0 = cold, 1 = normal, 2 = hot
-int previousState;
-int counter = 0; 
+int currentState = -1;                // Variable for current state of robot (0 = cold, 1 = normal, 2 = hot
+int previousState;                    // Variable for previous state of robot = -1 (0 = cold, 1 = normal, 2 = hot)
+int counter = 0;                      // Counter variable
 
 
 void setup() {
@@ -65,47 +64,50 @@ void setup() {
 }
 
 void loop(){
-// Read data and store it to variables hum and temp, create faren variable to convert from C to F
+    // Read data and store it to variables hum and temp, create faren variable to convert from C to F
     hum = dht.readHumidity();
     temp = dht.readTemperature();
     faren = (temp * 1.8) + 32;
 
 
-    if(faren <= 65.99){ 
-      currentState = 0;
-      stateCompare();
-      cold();
+    // Use if/else statements to define the 3 states (cold, normal, and hot)
+    if(faren <= 65.99){                         // If temperature is 65.99 F or below...
+      currentState = 0;                         // Set the current state to 0
+      stateCompare();                           // Run state compare function
+      cold();                                   // Run cold function
     }
 
-    else if(faren <= 79.99 && faren >= 66){
-      currentState = 1;
-      stateCompare();
-      normal();
+    else if(faren <= 79.99 && faren >= 66){     // If temperature is between 66 and 79.99 F...
+      currentState = 1;                         // Set the current state to 1
+      stateCompare();                           // Run state compare function
+      normal();                                 // Run normal function
     }
 
-    else{
-      currentState = 2;
-      stateCompare();
-      hot();  
+    else{                                       // If temperature is between 80 F and above...
+      currentState = 2;                         // Set the current state to 2
+      stateCompare();                           // Run state compare function
+      hot();                                    // Run hot function
     }
 }
 
-
+// Create a function that compares the current and previous states
 void stateCompare(){
-  if(currentState != -1){
-    previousState = currentState;
+  if(currentState != -1){                       // If currentstate doesn't equal -1...
+    previousState = currentState;               // Set the previous state to the current state
   }
   
-  counterCheck();
+  counterCheck();                               // Run countercheck function
 }
 
+
+// Create a function that runs the counter
 void counterCheck(){
-  if(currentState == previousState){
-    counter++;
+  if(currentState == previousState){            // If current state equals previous state...
+    counter++;                                  // Increment the counter
   }
   
-  else{
-    counter = 0;
+  else{                                         // Otherwise...
+    counter = 0;                                // Reset the counter to 0
   }
 }
 
@@ -122,132 +124,132 @@ void counterCheck(){
     delay(2000); //Delay 2 sec.*/
   
 
+// Create a function to define the cold state
 void cold(){
-  digitalWrite(blueLedPin, HIGH);        // Turns on and off blue LED
-    delay(1000);
-    digitalWrite(blueLedPin, LOW);
-    delay(1000);
-    digitalWrite(blueLedPin, HIGH);                    
-    delay(1000);
-    digitalWrite(blueLedPin, LOW);
-    delay(1000);
-    digitalWrite(blueLedPin, HIGH);                    
-    delay(1000);
-    digitalWrite(blueLedPin, LOW);
-    delay(1000);
-    digitalWrite(blueLedPin, HIGH);
+  // Turn on and off blue LED
+  digitalWrite(blueLedPin, HIGH);
+  delay(1000);
+  digitalWrite(blueLedPin, LOW);
+  delay(1000);
+  digitalWrite(blueLedPin, HIGH);                    
+  delay(1000);
+  digitalWrite(blueLedPin, LOW);
+  delay(1000);
+  digitalWrite(blueLedPin, HIGH);                    
+  delay(1000);
+  digitalWrite(blueLedPin, LOW);
 
-      // Draw a sleepy face on the LCD
-      lcd.setCursor(5,0); // Centers cursor
-      lcd.print("(-_-)"); // Prints sleepy face
+  // Draw a sleepy face on the LCD
+  lcd.setCursor(5,0); // Centers cursor
+  lcd.print("(-_-)"); // Prints sleepy face
+  
+  lcd.setCursor(2,1); // Will move the cursor to the second line
+
+  // Print temperature in F on LCD
+  lcd.print("Temp: ");
+  lcd.print(faren);
+  lcd.print("F");
+
+  // If counter is less than 4, play a sad tone
+  if(counter < 4) {
+    tone(buzzer, 400, 500);
+    delay(500);
+    tone(buzzer, 200, 500);
+    delay(500);
+  }  
       
-      lcd.setCursor(2,1); // Will move the cursor to the second line
-
-      // Print temperature in F on LCD
-      lcd.print("Temp: ");
-      lcd.print(faren);
-      lcd.print("F");
-
-      if(counter < 4) {   // Plays a sad tone
-        tone(buzzer, 400, 500);
-        delay(500);
-        tone(buzzer, 200, 500);
-        delay(500);
-        }  
-          
-        else{
-          noTone(7);
-        }
-      
+  else {
+    noTone(7);
+  }
 }
 
-  void normal(){
-    digitalWrite(greenLedPin, HIGH);                    // Turns on and off green LED
-    delay(500);
-    digitalWrite(greenLedPin, LOW);
-    delay(500);
-    digitalWrite(greenLedPin, HIGH);                    
-    delay(500);
-    digitalWrite(greenLedPin, LOW);
-    delay(500);
-    digitalWrite(greenLedPin, HIGH);                    
-    delay(500);
-    digitalWrite(greenLedPin, LOW);
-    delay(500);
-    digitalWrite(greenLedPin, HIGH);
-    
 
-      // Draw a happy face on the LCD
-      lcd.setCursor(5,0); // Centers cursor
-      lcd.write(byte(0)); // L face
-      lcd.write(byte(5)); // Eye
-      lcd.write(byte(7)); // Mouth
-      lcd.write(byte(1)); // Eye
-      lcd.write(byte(6)); // R face
-      
-      lcd.setCursor(2,1); // Will move the cursor to the second line
+// Create a function to define the normal state
+void normal(){
+  // Turn on and off green LED
+  digitalWrite(greenLedPin, HIGH);
+  delay(500);
+  digitalWrite(greenLedPin, LOW);
+  delay(500);
+  digitalWrite(greenLedPin, HIGH);                    
+  delay(500);
+  digitalWrite(greenLedPin, LOW);
+  delay(500);
+  digitalWrite(greenLedPin, HIGH);                    
+  delay(500);
+  digitalWrite(greenLedPin, LOW);
 
-      // Print temperature in F on LCD
-      lcd.print("Temp: ");
-      lcd.print(faren);
-      lcd.print("F");
-
-
- 
-      if(counter < 4) {   // Plays a happy tone
-          tone(buzzer, 700, 400);
-          delay(500);
-          tone(buzzer, 900, 500);
-          delay(500);
-          }
-              
-          else{
-            noTone(7);
-          }
-          
-       }
-
-  void hot(){
-      digitalWrite(redLedPin, HIGH);    // Turn on and off red LED
-      delay(250);
-      digitalWrite(redLedPin, LOW);
-      delay(250);
-      digitalWrite(redLedPin, HIGH);                    
-      delay(250);
-      digitalWrite(redLedPin, LOW);
-      delay(250);
-      digitalWrite(redLedPin, HIGH);                    
-      delay(250);
-      digitalWrite(redLedPin, LOW);
-      delay(250);
-      digitalWrite(redLedPin, HIGH);
-
-      // Draw a mad face on the LCD
-      lcd.setCursor(4,0); // Centers cursor
-      lcd.write(byte(0)); // L face
-      lcd.write(byte(1)); // Eye
-      lcd.write(byte(2)); // L eyebrow
-      lcd.write(byte(3)); // Mouth
-      lcd.write(byte(4)); // R eyebrow
-      lcd.write(byte(5)); // Eye
-      lcd.write(byte(6)); // R face
-      
-      lcd.setCursor(2,1); // Will move the cursor to the second line
-
-      // Print temperature in F on LCD
-      lcd.print("Temp: "); 
-      lcd.print(faren);
-      lcd.print("F");
-
-      if(counter < 4) {   // Plays a mad tone
-        tone(buzzer, 400, 500);
-        delay(500);
-        tone(buzzer, 200, 500);
-        delay(500);
-        }   
-         
-        else{
-          noTone(7);
-        }
+  // Draw a happy face on the LCD
+  lcd.setCursor(5,0); // Centers cursor
+  lcd.write(byte(0)); // L face
+  lcd.write(byte(5)); // Eye
+  lcd.write(byte(7)); // Mouth
+  lcd.write(byte(1)); // Eye
+  lcd.write(byte(6)); // R face
   
+  lcd.setCursor(2,1); // Will move the cursor to the second line
+
+  // Print temperature in F on LCD
+  lcd.print("Temp: ");
+  lcd.print(faren);
+  lcd.print("F");
+
+  // If counter is less than 4, play a happy tone
+  if(counter < 4) {
+    tone(buzzer, 700, 400);
+    delay(500);
+    tone(buzzer, 900, 500);
+    delay(500);
+   }
+          
+   else {
+    noTone(7);
+   }   
+}
+
+
+// Create a function that defines the hot state
+void hot(){
+  // Turn on and off red LED
+  digitalWrite(redLedPin, HIGH);
+  delay(250);
+  digitalWrite(redLedPin, LOW);
+  delay(250);
+  digitalWrite(redLedPin, HIGH);                    
+  delay(250);
+  digitalWrite(redLedPin, LOW);
+  delay(250);
+  digitalWrite(redLedPin, HIGH);                    
+  delay(250);
+  digitalWrite(redLedPin, LOW);
+  delay(250);
+    
+  // Draw a mad face on the LCD
+  lcd.setCursor(4,0); // Centers cursor
+  lcd.write(byte(0)); // L face
+  lcd.write(byte(1)); // Eye
+  lcd.write(byte(2)); // L eyebrow
+  lcd.write(byte(3)); // Mouth
+  lcd.write(byte(4)); // R eyebrow
+  lcd.write(byte(5)); // Eye
+  lcd.write(byte(6)); // R face
+  
+  lcd.setCursor(2,1); // Will move the cursor to the second line
+
+  // Print temperature in F on LCD
+  lcd.print("Temp: "); 
+  lcd.print(faren);
+  lcd.print("F");
+
+  // If counter is less than 4, play a mad tone
+  if(counter < 4) {
+    tone(buzzer, 400, 500);
+    delay(500);
+    tone(buzzer, 200, 500);
+    delay(500);
+  }   
+     
+  else {
+    noTone(7);
+  }
 }
