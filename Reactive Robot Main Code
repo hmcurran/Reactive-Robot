@@ -150,7 +150,7 @@ void cold(){
   lcd.print(faren);
   lcd.print("F");
 
-  // If counter is less than 4, play a sad tone
+  // If counter is less than 6, play a sad tone
   if(counter < 6) {
     tone(buzzer, 400, 500);
     delay(500);
@@ -194,7 +194,7 @@ void normal(){
   lcd.print(faren);
   lcd.print("F");
 
-  // If counter is less than 4, play a happy tone
+  // If counter is less than 6, play a happy tone
   if(counter < 6) {
     tone(buzzer, 700, 400);
     delay(500);
@@ -241,7 +241,7 @@ void hot(){
   lcd.print(faren);
   lcd.print("F");
 
-  // If counter is less than 4, play a mad tone
+  // If counter is less than 6, play a mad tone
   if(counter < 6) {
     tone(buzzer, 400, 500);
     delay(500);
